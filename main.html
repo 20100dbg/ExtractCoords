@@ -17,7 +17,7 @@
 
 <input type="file" id="fileInput" onchange="importFile();" /><br>
 
-<button onclick="lireDiv('pointsIn');">import</button>
+<button onclick="importManuel();">import</button>
  - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 <button onclick="appliquerFiltre();">Filtrer</button><br>
 <textarea id="pointsIn" rows="5" cols="40"></textarea>
@@ -34,13 +34,14 @@ var map;
 window.onload = function() {
 
     var baseLayer = L.tileLayer('carto/{z}/{x}/{y}.png', { });
-
+    
     map = new L.Map('map', {
       editable: true,
       center: {lat:48.89, lng:7.8},
       zoom: 10,
       layers: [baseLayer]
     });
+    L.control.scale({imperial:false}).addTo(map);
 
     map.pm.addControls({  
       position: 'topleft',  
@@ -53,6 +54,7 @@ window.onload = function() {
     });
 
 }; //onload
+
 
 function download()
 {

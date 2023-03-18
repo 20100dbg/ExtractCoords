@@ -7,6 +7,13 @@ function DessinerPoints(tab)
         layersPoints.push(L.circle([tab[i].lat, tab[i].lng], {radius: 100, fill: true}).addTo(map));
 }
 
+function importManuel()
+{
+    tabPointsImport = lireDiv('pointsIn');
+    DessinerPoints(tabPointsImport);
+    centrerVue(tabPointsImport);
+}
+
 function lireDiv(div)
 {
     var data = [];
@@ -39,6 +46,7 @@ function appliquerFiltre()
 {
     tabPointsFiltre = filtrer(tabPointsImport);
     ecrireDiv('pointsOut', tabPointsFiltre);
+    DessinerPoints(tabPointsFiltre);
 }
 
 function filtrer(tabPoints)
@@ -110,6 +118,7 @@ function importFile()
     var ext = filename.substring(filename.lastIndexOf('.'));
 
     tabPointsImport = importCSV(fileReader.result);
+    centrerVue(tabPointsImport);
     ecrireDiv('pointsIn', tabPointsImport);
     DessinerPoints(tabPointsImport);
   }
@@ -134,4 +143,26 @@ function importCSV(txt)
   }
 
   return data;
+}
+
+function findBounds(tabPoints)
+{
+    var N = tabPoints[0].lat, S = tabPoints[0].lat, E = tabPoints[0].lng, W = tabPoints[0].lng;
+
+    for (var i = 1; i < tabPoints.length; i++)
+    {
+        if (N > tabPoints[i].lat) N = tabPoints[i].lat;
+        else if (S < tabPoints[i].lat) S = tabPoints[i].lat;
+        
+        if (E > tabPoints[i].lng) E = tabPoints[i].lng;
+        else if (W < tabPoints[i].lng) W = tabPoints[i].lng;
+    }
+
+    return [[N, W], [S, E]];
+}
+
+function centrerVue(tabPoints)
+{
+    map.flyToBounds(findBounds(tabPoints), {animate:false});
+    map.zoomOut();
 }
