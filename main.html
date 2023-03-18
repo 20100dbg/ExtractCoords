@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title></title>
+  <link rel="stylesheet" href="css/leaflet.css" />
+  <link rel="stylesheet" href="css/ExtractCoords.css" />
+  <link rel="stylesheet" href="css/leaflet-geoman.css" />
+
+  <script src="js/leaflet.js"></script>
+  <script src="js/leaflet-geoman.min.js"></script>
+  <script src="js/ExtractCoords.js"></script>
+</head>
+<body>
+
+<div id="map"></div>
+
+<input type="file" id="fileInput" onchange="importFile();" /><br>
+
+<button onclick="lireDiv('pointsIn');">import</button>
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+<button onclick="appliquerFiltre();">Filtrer</button><br>
+<textarea id="pointsIn" rows="5" cols="40"></textarea>
+<textarea id="pointsOut" rows="5" cols="40"></textarea>
+<br>
+<button onclick="download();">Download</button><br>
+
+<script type="text/javascript">
+var layersPoints = [];
+var tabPointsImport = [];
+var tabPointsFiltre = [];
+var map;
+
+window.onload = function() {
+
+    var baseLayer = L.tileLayer('carto/{z}/{x}/{y}.png', { });
+
+    map = new L.Map('map', {
+      editable: true,
+      center: {lat:48.89, lng:7.8},
+      zoom: 10,
+      layers: [baseLayer]
+    });
+
+    map.pm.addControls({  
+      position: 'topleft',  
+      drawMarker: false,
+      drawCircleMarker: false,
+      drawPolyline: false,
+      drawText: false,
+      cutPolygon: false,
+      rotateMode: false,
+    });
+
+}; //onload
+
+function download()
+{
+    var txt = '';
+    for (var i = 0; i < tabPointsFiltre.length; i++)
+        txt += tabPointsFiltre[i].lat + ';' + tabPointsFiltre[i].lng + '\n';
+    downloadFile("extract.csv", txt);
+}
+
+function downloadFile(filename, text)
+{
+  var element = document.createElement('a');
+  element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+  element.setAttribute('download', filename);
+  element.style.display = 'none';
+  document.body.appendChild(element);
+  element.click();
+  document.body.removeChild(element);
+}
+
+
+</script>
+
+</body>
+</html>
