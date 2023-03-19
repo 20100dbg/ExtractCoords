@@ -4,12 +4,16 @@ function DessinerPoints(tab)
     layersPoints = [];
 
     for (var i = 0; i < tab.length; i++)
-        layersPoints.push(L.circle([tab[i].lat, tab[i].lng], {radius: 100, fill: true}).addTo(map));
+    {
+        var pointObj = getPointObj(tab[i]);
+        layersPoints.push(L.circle([pointObj.lat, pointObj.lng], {radius: 100, fill: true}).addTo(map));
+    }
 }
 
 function importManuel()
 {
     tabPointsImport = lireDiv('pointsIn');
+    document.getElementById('labelPointsIn').innerHTML = tabPointsImport.length;
     DessinerPoints(tabPointsImport);
     centrerVue(tabPointsImport);
 }
@@ -39,13 +43,17 @@ function ecrireDiv(div, tabPoints)
     divOut.value = '';
 
     for (var i = 0; i < tabPoints.length; i++)
-        divOut.value += tabPoints[i].lat + ";" + tabPoints[i].lng + "\n";
+    {
+        var pointObj = getPointObj(tabPoints[i]);
+        divOut.value += pointObj.lat + ";" + pointObj.lng + "\n";
+    }
 }
 
 function appliquerFiltre()
 {
     tabPointsFiltre = filtrer(tabPointsImport);
     ecrireDiv('pointsOut', tabPointsFiltre);
+    document.getElementById('labelPointsOut').innerHTML = tabPointsFiltre.length;
     DessinerPoints(tabPointsFiltre);
 }
 
@@ -57,12 +65,13 @@ function filtrer(tabPoints)
     for (var i = 0; i < tabPoints.length; i++)
     {
         var flagAdded = false;
+        var pointObj = getPointObj(tabPoints[i]);
 
         for (var j = 0; j < tabPolygons.length && !flagAdded; j++)
         {
             if ("_mRadius" in tabPolygons[j])
             {
-                if (IsInsideCircle(tabPoints[i], tabPolygons[j]._latlng, tabPolygons[j]._mRadius))
+                if (IsInsideCircle(pointObj, tabPolygons[j]._latlng, tabPolygons[j]._mRadius))
                 {
                     tabFiltre.push(tabPoints[i])
                     flagAdded = true;
@@ -70,7 +79,7 @@ function filtrer(tabPoints)
             }
             else
             {
-                if (IsInsidePolygon(tabPoints[i], tabPolygons[j]._latlngs[0]))
+                if (IsInsidePolygon(pointObj, tabPolygons[j]._latlngs[0]))
                 {
                     tabFiltre.push(tabPoints[i])
                     flagAdded = true;
@@ -105,8 +114,6 @@ function IsInsideCircle(posPoint, posCircle, radius)
     return (dist <= radius);
 }
 
-
-
 //import
 function importFile()
 {
@@ -118,6 +125,7 @@ function importFile()
     var ext = filename.substring(filename.lastIndexOf('.'));
 
     tabPointsImport = importCSV(fileReader.result);
+    document.getElementById('labelPointsIn').innerHTML = tabPointsImport.length;
     centrerVue(tabPointsImport);
     ecrireDiv('pointsIn', tabPointsImport);
     DessinerPoints(tabPointsImport);
@@ -131,31 +139,40 @@ function importCSV(txt)
 {
   var lines = txt.split('\n');
   var data = [];
+  lineHeaders = lines[0];
 
-  for (var i = 0; i < lines.length; i++)
+  for (var i = 1; i < lines.length; i++)
   {
     var tab = lines[i].trim().split(';');
-    var lat = parseFloat(tab[0]);
-    var lng = parseFloat(tab[1]);
+    tab[0] = parseFloat(tab[0]);
+    tab[1] = parseFloat(tab[1]);
         
-    if (!isNaN(lat) && !isNaN(lng))
-        data.push({lat:lat, lng:lng});
+    if (!isNaN(tab[0]) && !isNaN(tab[1]))
+        data.push(tab);
   }
 
   return data;
 }
 
+function getPointObj(tabLine)
+{
+    return {lat: tabLine[0], lng: tabLine[1]};
+}
+
 function findBounds(tabPoints)
 {
-    var N = tabPoints[0].lat, S = tabPoints[0].lat, E = tabPoints[0].lng, W = tabPoints[0].lng;
+    var pointObj = getPointObj(tabPoints[0]);
+    var N = pointObj.lat, S = pointObj.lat, E = pointObj.lng, W = pointObj.lng;
 
     for (var i = 1; i < tabPoints.length; i++)
     {
-        if (N > tabPoints[i].lat) N = tabPoints[i].lat;
-        else if (S < tabPoints[i].lat) S = tabPoints[i].lat;
+        var pointObj = getPointObj(tabPoints[i]);
+
+        if (N > pointObj.lat) N = pointObj.lat;
+        else if (S < pointObj.lat) S = pointObj.lat;
         
-        if (E > tabPoints[i].lng) E = tabPoints[i].lng;
-        else if (W < tabPoints[i].lng) W = tabPoints[i].lng;
+        if (E > pointObj.lng) E = pointObj.lng;
+        else if (W < pointObj.lng) W = pointObj.lng;
     }
 
     return [[N, W], [S, E]];
@@ -165,4 +182,23 @@ function centrerVue(tabPoints)
 {
     map.flyToBounds(findBounds(tabPoints), {animate:false});
     map.zoomOut();
+}
+
+function download()
+{
+    var txt = lineHeaders + '\n';
+    for (var i = 0; i < tabPointsFiltre.length; i++)
+        txt += tabPointsFiltre[i].join(';') + '\n';
+    downloadFile("extract.csv", txt);
+}
+
+function downloadFile(filename, text)
+{
+  var element = document.createElement('a');
+  element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+  element.setAttribute('download', filename);
+  element.style.display = 'none';
+  document.body.appendChild(element);
+  element.click();
+  document.body.removeChild(element);
 }
